@@ -15,7 +15,7 @@ module.exports.getUserByID = (req, res) => {
       }
       res.send(user);
     })
-    .catch(() => res.status(404).send({ message: 'Запрашиваемый пользователь не найден' }));
+    .catch(() => res.status(400).send({ message: 'Некорректный запрос' }));
 };
 
 module.exports.addUser = (req, res) => {
