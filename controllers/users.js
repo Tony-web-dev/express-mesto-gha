@@ -54,7 +54,7 @@ module.exports.editUser = (req, res) => {
         return res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь с таким ID не найден' });
       }
       return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
-});
+    });
 };
 
 module.exports.editUserAvatar = (req, res) => {
