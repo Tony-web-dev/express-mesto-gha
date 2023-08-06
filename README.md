@@ -9,5 +9,6 @@
 `npm run start` — запускает сервер   
 `npm run dev` — запускает сервер с hot-reload
 
-##
- Ссылка на GitHub [https://github.com/Tony-web-dev/express-mesto-gha]
+## Ссылка на GitHub
+
+https://github.com/Tony-web-dev/express-mesto-gha
