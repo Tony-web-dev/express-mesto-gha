@@ -33,7 +33,7 @@ module.exports.deleteCard = (req, res) => {
       }
       return res.send({ message: 'Карточка удалена' });
     })
-    .catch(() => {
+    .catch((error) => {
       if (error instanceof mongoose.Error.CastError) {
         return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Указан некорректный ID' });
       }
