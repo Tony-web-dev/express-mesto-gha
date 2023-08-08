@@ -5,67 +5,72 @@ const {
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
 } = require('http2').constants;
 const mongoose = require('mongoose');
-const modelCard = require('../models/card');
+const Card = require('../models/card');
 
 module.exports.getCards = (req, res) => {
-  modelCard.find({})
-    .populate(['owner', 'likes'])
+  Card.find({})
     .then((cards) => res.send(cards))
     .catch(() => res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' }));
 };
 
 module.exports.addCard = (req, res) => {
   const { name, link } = req.body;
-  modelCard.create({ name, link, owner: req.user._id })
-    .then((card) => {
-      modelCard.findById(card._id)
-        .populate('owner')
-        .then((data) => res.status(HTTP_STATUS_CREATED).send(data))
-        .catch(() => res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка не найдена' }));
-    })
+  Card.create({ name, link, owner: req.user._id })
+    .then((card) => res.status(HTTP_STATUS_CREATED).send(card))
     .catch((error) => {
       if (error instanceof mongoose.Error.ValidationError) {
-        res.status(HTTP_STATUS_BAD_REQUEST).send({ message: error.message });
-      } else {
-        res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Проверьте правильность заполнения полей' });
       }
+      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
     });
 };
 
 module.exports.deleteCard = (req, res) => {
-  modelCard.findByIdAndRemove(req.params.cardID)
+  Card.findByIdAndRemove(req.params.cardID)
     .then((card) => {
       if (!card) {
-        res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка не найдена' });
-        return;
+        return res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка не найдена' });
       }
-      res.send({ message: 'Карточка удалена' });
+      return res.send({ message: 'Карточка удалена' });
     })
-    .catch(() => res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный запрос' }));
+    .catch(() => {
+      if (error instanceof mongoose.Error.CastError) {
+        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Указан некорректный ID' });
+      }
+      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+    });
 };
 
 module.exports.likeCard = (req, res) => {
-  modelCard.findByIdAndUpdate(req.params.cardID, { $addToSet: { likes: req.user._id } }, { new: true })
+  Card.findByIdAndUpdate(req.params.cardID, { $addToSet: { likes: req.user._id } }, { new: true })
     .populate(['owner', 'likes'])
     .then((card) => {
       if (!card) {
-        res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка не найдена' });
-        return;
+        return res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка не найдена' });
       }
-      res.send(card);
+      return res.send(card);
     })
-    .catch(() => res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный запрос' }));
+    .catch((error) => {
+      if (error instanceof mongoose.Error.CastError) {
+        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Указан некорректный ID' });
+      }
+      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+    });
 };
 
 module.exports.dislikeCard = (req, res) => {
-  modelCard.findByIdAndUpdate(req.params.cardID, { $pull: { likes: req.user._id } }, { new: true })
+  Card.findByIdAndUpdate(req.params.cardID, { $pull: { likes: req.user._id } }, { new: true })
     .populate(['owner', 'likes'])
     .then((card) => {
       if (!card) {
-        res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка не найдена' });
-        return;
+        return res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка не найдена' });
       }
-      res.send(card);
+      return res.send(card);
     })
-    .catch(() => res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный запрос' }));
+    .catch((error) => {
+      if (error instanceof mongoose.Error.CastError) {
+        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Указан некорректный ID' });
+      }
+      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+    });
 };

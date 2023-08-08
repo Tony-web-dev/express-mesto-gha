@@ -5,16 +5,16 @@ const {
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
 } = require('http2').constants;
 const mongoose = require('mongoose');
-const modelUser = require('../models/user');
+const User = require('../models/user');
 
 module.exports.getUsers = (req, res) => {
-  modelUser.find({})
+  User.find({})
     .then((users) => res.send(users))
     .catch(() => res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' }));
 };
 
 module.exports.getUserByID = (req, res) => {
-  modelUser.findById(req.params.userID)
+  User.findById(req.params.userID)
     .orFail()
     .then((user) => res.send(user))
     .catch((error) => {
@@ -30,25 +30,24 @@ module.exports.getUserByID = (req, res) => {
 
 module.exports.addUser = (req, res) => {
   const { name, about, avatar } = req.body;
-  modelUser.create({ name, about, avatar })
+  User.create({ name, about, avatar })
     .then((user) => res.status(HTTP_STATUS_CREATED).send(user))
     .catch((error) => {
       if (error instanceof mongoose.Error.ValidationError) {
-        res.status(HTTP_STATUS_BAD_REQUEST).send({ message: error.message });
-      } else {
-        res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Проверьте правильность заполнения полей' });
       }
+      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
     });
 };
 
 module.exports.editUser = (req, res) => {
   const { name, about } = req.body;
-  modelUser.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
+  User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
     .orFail()
     .then((user) => res.send(user))
     .catch((error) => {
       if (error instanceof mongoose.Error.ValidationError) {
-        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: error.message });
+        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Проверьте правильность заполнения полей' });
       }
       if (error instanceof mongoose.Error.DocumentNotFoundError) {
         return res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь с таким ID не найден' });
@@ -59,17 +58,16 @@ module.exports.editUser = (req, res) => {
 
 module.exports.editUserAvatar = (req, res) => {
   const { avatar } = req.body;
-  if (req.user._id) {
-    modelUser.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
-      .then((user) => res.send(user))
-      .catch((error) => {
-        if (error instanceof mongoose.Error.ValidationError) {
-          res.status(HTTP_STATUS_BAD_REQUEST).send({ message: error.message });
-        } else {
-          res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь с таким ID не найден' });
-        }
-      });
-  } else {
-    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
-  }
+  User.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
+    .orFail()
+    .then((user) => res.send(user))
+    .catch((error) => {
+      if (error instanceof mongoose.Error.ValidationError) {
+        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Проверьте правильность заполнения полей' });
+      }
+      if (error instanceof mongoose.Error.DocumentNotFoundError) {
+        return res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь с таким ID не найден' });
+      }
+      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+    });
 };
