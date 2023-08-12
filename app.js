@@ -30,7 +30,7 @@ app.use(cookieParser());
 app.use('/signup', require('./routes/signup'));
 app.use('/signin', require('./routes/signin'));
 
-// app.use(auth);
+app.use(auth);
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
