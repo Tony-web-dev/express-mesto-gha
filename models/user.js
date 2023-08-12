@@ -27,7 +27,6 @@ const userSchema = new mongoose.Schema({
         const regex = /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_+.~#?&/=]*)$/;
         return regex.test(v);
       },
-      message: 'Введите URL',
     },
   },
   email: {
@@ -38,7 +37,6 @@ const userSchema = new mongoose.Schema({
       validator(email) {
         validator.isEmail(email);
       },
-      message: 'Укажите правильный email',
     },
   },
   password: {
@@ -48,9 +46,8 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-userSchema.statics.findUserByCredentials = function findUserByCredentials(email, password) {
-  return this.findOne({ email })
-    .select('+pasword')
+userSchema.statics.findUserByCredentials = function (email, password) {
+  return this.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
         throw new UnauthorizedError('Указаны неправильные почта или пароль');
