@@ -1,6 +1,6 @@
-const { HTTP_STATUS_NOT_FOUND } = require('http2').constants;
 const express = require('express');
 const mongoose = require('mongoose');
+const NotFoundError = require('./errors/notFoundError');
 
 const { PORT = 3000, DataBaseURL = 'mongodb://127.0.0.1:27017/mestodb' } = process.env;
 
@@ -15,7 +15,7 @@ mongoose.connect(DataBaseURL, {
 
 app.use((req, res, next) => {
   req.user = {
-    _id: '64da6da1b5f052a6c183c530',
+    _id: '64daa18b3b31d462d910267b',
   };
   next();
 });
@@ -23,9 +23,7 @@ app.use((req, res, next) => {
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
-app.use('*', (req, res) => {
-  res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Страница не найдена' });
-});
+app.use('*', (req, res, next) => next(new NotFoundError('Страница не найдена')));
 
 app.use((error, req, res, next) => {
   const { statusCode = 500, message } = error;

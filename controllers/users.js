@@ -1,8 +1,13 @@
 const { HTTP_STATUS_CREATED } = require('http2').constants;
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const BadRequestError = require('../errors/badRequestError');
 const NotFoundError = require('../errors/notFoundError');
+const ConflictError = require('../errors/conflictError');
+
+const { SECRET_KEY = 'some_key' } = process.env;
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
@@ -25,11 +30,19 @@ module.exports.getUserByID = (req, res, next) => {
     });
 };
 
-module.exports.addUser = (req, res, next) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
+module.exports.createUser = (req, res, next) => {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name, about, avatar, email, password: hash,
+    }))
     .then((user) => res.status(HTTP_STATUS_CREATED).send(user))
     .catch((error) => {
+      if (error.code === 11000) {
+        return next(new ConflictError('Пользователь с таким email уже зарегистрирован'));
+      }
       if (error instanceof mongoose.Error.ValidationError) {
         return next(new BadRequestError('Проверьте правильность заполнения полей'));
       }
