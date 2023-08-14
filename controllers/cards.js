@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const Card = require('../models/card');
 const BadRequestError = require('../errors/badRequestError');
 const NotFoundError = require('../errors/notFoundError');
-const ForbiddenError = require('../errors/forbiddenError');
 
 module.exports.getCards = (req, res, next) => {
   Card.find({})
@@ -24,20 +23,14 @@ module.exports.addCard = (req, res, next) => {
 };
 
 module.exports.deleteCard = (req, res, next) => {
-  Card.findById(req.params.cardID)
+  Card.findByIdAndRemove(req.params.cardID)
     .then((card) => {
-      if (!card.owner.equals(req.user._id)) {
-        throw new ForbiddenError('Вы не можете удалить карточку другого пользователя');
-      }
-      Card.deleteOne(card)
-        .orFail()
-        .then(() => res.send({ message: 'Карточка удалена' }))
-        .catch(next);
-    })
-    .catch((error) => {
-      if (error instanceof mongoose.Error.DocumentNotFoundError) {
+      if (!card) {
         return next(new NotFoundError('Карточка с таким ID не найдена'));
       }
+      return res.send({ message: 'Карточка удалена' });
+    })
+    .catch((error) => {
       if (error instanceof mongoose.Error.CastError) {
         return next(new BadRequestError('Указан некорректный ID'));
       }
@@ -50,7 +43,7 @@ module.exports.likeCard = (req, res, next) => {
     .populate(['owner', 'likes'])
     .then((card) => {
       if (!card) {
-        return next(new NotFoundError('Карточка не найдена'));
+        return next(new NotFoundError('Карточка с таким ID не найдена'));
       }
       return res.send(card);
     })
@@ -67,7 +60,7 @@ module.exports.dislikeCard = (req, res, next) => {
     .populate(['owner', 'likes'])
     .then((card) => {
       if (!card) {
-        return next(new NotFoundError('Карточка не найдена'));
+        return next(new NotFoundError('Карточка с таким ID не найдена'));
       }
       return res.send(card);
     })
