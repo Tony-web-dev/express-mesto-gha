@@ -3,15 +3,17 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { errors } = require('celebrate');
 const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
 const NotFoundError = require('./errors/notFoundError');
 const auth = require('./middlewares/auth');
 const { PORT, DataBaseURL } = require('./utils/constants');
 const handleError = require('./middlewares/handleError');
 
 const app = express();
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+app.use(cookieParser());
 app.use(helmet());
 
 const limiter = rateLimit({
