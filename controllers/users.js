@@ -6,8 +6,8 @@ const User = require('../models/user');
 const BadRequestError = require('../errors/badRequestError');
 const NotFoundError = require('../errors/notFoundError');
 const ConflictError = require('../errors/conflictError');
-
-const { SECRET_KEY = 'some_key' } = process.env;
+const UnauthorizedError = require('../errors/unauthorizedError');
+const { SECRET_KEY } = require('../utils/constants');
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
@@ -28,6 +28,13 @@ module.exports.getUserByID = (req, res, next) => {
       }
       return next(error);
     });
+};
+
+module.exports.getUserMe = (req, res, next) => {
+  User.findById(req.user._id)
+    .orFail()
+    .then((user) => res.send(user))
+    .catch(next);
 };
 
 module.exports.createUser = (req, res, next) => {
@@ -80,4 +87,14 @@ module.exports.editUserAvatar = (req, res, next) => {
       }
       return next(error);
     });
+};
+
+module.exports.login = (req, res, next) => {
+  const { email, password } = req.body;
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, SECRET_KEY, { expiresIn: '7d' });
+      res.send({ token });
+    })
+    .catch(() => next(new UnauthorizedError('Указаны неправильные почта или пароль')));
 };
