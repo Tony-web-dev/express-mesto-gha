@@ -45,9 +45,11 @@ module.exports.createUser = (req, res, next) => {
     .then((hash) => User.create({
       name, about, avatar, email, password: hash,
     }))
-    .then((user) => res.status(HTTP_STATUS_CREATED).send({
-      name, about, avatar, email, _id: user._id,
-    }))
+    .then((user) => {
+      const userRes = user.toObject();
+      delete userRes.password;
+      return res.status(HTTP_STATUS_CREATED).send(userRes);
+    })
     .catch((error) => {
       if (error.code === 11000) {
         return next(new ConflictError('Пользователь с таким email уже зарегистрирован'));
@@ -99,7 +101,6 @@ module.exports.login = (req, res, next) => {
       res.cookie('jwt', token, {
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
-        secure: true,
         sameSite: true,
       });
       res.send({ token });
